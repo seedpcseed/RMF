@@ -84,6 +84,20 @@ https://kaiju.binf.ku.dk/database/kaiju_db_progenomes_2020-05-25.tgz
 1. I routinely run the pipeline and containers on a Slurm-based management system where R and singularity are loaded as modules. The use of slurm can be controlled. 
 2. I routinely will run with arrays of 100 nodes and up to 52 threads per node. Ideally you have at least 64 Gb per node available but 128 Gb per node is better. The number of nodes and threads can be modified.
 
+## Starting up
+1. update the yaml/metaflow.yml file. The part that usually needs adjustment is the first element "startup:" depending on your raw sequencing file extensions and how you want to split off the sample names from the rest of the file names.  Note that as it exists in this repo, the raw seq files are assumed to be in data/raw_seq. 
+2. Open up the R/variables.R file.
+   * Go to 'sample and input information'. 
+   * the assumed project directory is the one where you are starting the pipeline. This is automatically assumed from 'getProjDir()' You may however hardcode the project directory.  The base directory is used in the singularity mount. You will need this to be at a base level that singularity can search across the directories needed for resources. If all of your files including the containers and databases are together in the project directory, basedir may equal projectdir. However, if you use symbolic links to keep the containers and databases somewhere else, you will need basedir to be higher in the hierarchy than the projdir and the locations of those linked directories. 
+   * If you are using a slurm manager, you will want to adjust the information under 'SLURM variables'.  The time here is for the steps and not the overall project.   You may also adjust the time in the scripts if you like.  
+   * you should not have to change the 'containers' section if you have put the build containers in your containers directory (example containers/qc.sif)
+   * Generally you will not want to change the "MODULE-SPECIFIC VARIABLES." An exception might be 'variables.decontaminate' if you want to add or remove one of the decontamination targets. Usually it does not add too much time to decontaminate for human and mouse and phiX even if you are only worried about contamination from one host.  
+3. The R/utilities.R script has accessory functions and should not need modification.
+4. Startup 
+   * There are several ways to start the pipeline.
+   * The first way is to bash startup.sh. This approach assumes your are using slurm and a module system. You will note that the RMetaflow.sh script will be called that has information about your slurm credentials and runtime.  You can think of this script as a timekeeper. It needs time but not heavy resources. You may need to adjust what R module you load. The base is set to load R version 4.0.3. 
+   * The second way is to run R/startup.R directly and get things rolling. You can do this from the command line. You can also do so from an R analytic node that has RStudio. However, your analytic node may likely not have a slurm manager on it. So you can write the slurm scripts from the modules but then have to switch to your computational nodes to sbatch the scripts.  
+
 ## Citations
 * Chen S, Zhou Y, Chen Y, Gu J. fastp: an ultra-fast all-in-one FASTQ preprocessor. Bioinformatics. 2018 Sep 1;34(17):i884–i890. PMCID: PMC6129281
 * Li H. Minimap2: pairwise alignment for nucleotide sequences. Bioinformatics. 2018 Sep 15;34(18):3094–3100. PMCID: PMC6137996
