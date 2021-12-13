@@ -1,0 +1,161 @@
+Bootstrap: docker
+From: python:3.6.14-buster
+#From: debian:stretch
+
+%setup
+    if [ -L /dev/shm ]; then
+        if [ ! -d /run/shm ]; then exit 1; fi
+        mkdir -p /dev/manual
+        ln -s /dev/manual ${SINGULARITY_ROOTFS}/run/shm
+        touch ${SINGULARITY_ROOTFS}/rm_run_shm
+    fi
+
+
+%environment
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export CONDA_DIR="/opt/miniconda-4.6.14"
+PATH=/opt/miniconda-4.6.14/bin:/software:/software/mmseqs/bin:/software/mash-Linux64-v2.3:/software/minimap2/:/software/pugz:/software/rkmh:/:$PATH
+
+%post
+apt-get update -qq
+apt-get install -y -q --no-install-recommends \
+    apt-utils \
+    bzip2 \
+    ca-certificates \
+    curl \
+    locales \
+    gcc \
+    libomp-dev \
+    gfortran \
+    build-essential \
+    unzip \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxcomposite-dev \
+    wget \
+    gdebi-core \
+    cmake \
+    git \
+    python3-pip \
+    zlib1g-dev \
+    jellyfish \
+    figlet \
+    toilet
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+dpkg-reconfigure --frontend=noninteractive locales
+update-locale LANG= en_US.UTF-8
+chmod 777 /opt && chmod a+s /opt
+
+export PATH="/opt/miniconda-4.6.14/bin:$PATH"
+echo  "Downloading Miniconda installer ..."
+conda_installer="/tmp/miniconda.sh"
+curl -fsSL --retry 5 -o  $conda_installer  https://repo.continuum.io/miniconda/Miniconda3-4.6.14-Linux-x86_64.sh
+bash  $conda_installer -b -p /opt/miniconda-4.6.14
+rm -f  $conda_installer
+
+conda config --system --prepend channels conda-forge
+conda config --system --set auto_update_conda false
+conda config --system --set show_channel_urls true
+conda config --add channels bioconda
+conda config --add channels anaconda
+conda config --add channels biocore
+conda config --add channels agbiome
+conda config --add channels biobakery
+conda config --add channels r
+
+sync && conda update conda && conda clean -y --all && sync
+
+conda install mamba
+mamba install fastp
+# mamba install minimap2
+mamba install samtools
+mamba install bbtools
+mamba install bedtools
+mamba install pigz
+mamba install kneaddata
+mamba install seqtk
+mamba install bbtools
+mamba install fastx_toolkit
+
+mkdir /software
+
+git clone https://github.com/lh3/minimap2 /software/minimap2
+cd /software/minimap2 && make
+
+# git clone https://github.com/hasindu2008/minimap2-arm /software/minimap2
+# cd /software/minimap2
+# make
+
+wget https://github.com/chanzuckerberg/idseq-dedup/releases/download/v0.1.1/idseq-dedup-Linux -O /software/idseq-dedup
+
+git clone https://github.com/Piezoid/pugz /software/pugz
+cd /software/pugz
+# make
+make asserts=0
+# ln -s /software/pugz/gunzip /bin/pugz
+
+cd /software
+wget https://github.com/biod/sambamba/releases/download/v0.8.1/sambamba-0.8.1-linux-amd64-static.gz
+gzip -d sambamba-0.8.1-linux-amd64-static.gz
+mv sambamba-0.8.1-linux-amd64-static sambamba
+
+cd /software
+wget https://mmseqs.com/latest/mmseqs-linux-avx2.tar.gz
+tar xvfz mmseqs-linux-avx2.tar.gz
+
+cd /software
+wget https://github.com/marbl/Mash/releases/download/v2.3/mash-Linux64-v2.3.tar
+tar xvf mash-Linux64-v2.3.tar
+
+git clone --recursive https://github.com/edawson/rkmh.git /software/rkmh
+cd /software/rkmh
+make
+
+chmod 777 -R /software
+chmod 777 /software/minimap2/minimap2
+chmod 777 /software/idseq-dedup
+chmod 777 /software/mmseqs/bin/mmseqs
+chmod 777 /software/mash-Linux64-v2.3/mash
+chmod 777 -R /bin
+chmod 777 /software/pugz/gunzip
+chmod 777 /software/rkmh
+
+sync && mamba clean --all && sync
+
+pip install --no-cache-dir  \
+  ete3 \
+  numpy \
+  scipy \
+  pandas==0.25.1 \
+  mash_wrapper
+
+chmod 777 -R /opt/miniconda-4.6.14/bin
+
+rm -rf /var/lib/apt/lists/*
+rm -rf ~/.cache/pip/*
+sync
+
+cat >> /container-contents <<EOL
+figlet -f big RMetaflow
+figlet -f smslant QC Module
+echo ""
+echo "-------------------"
+echo "CONTAINER CONTENTS:"
+echo "-------------------"
+conda info
+conda list
+ls /software
+echo "-------------------"
+echo "-------------------"
+echo ""
+EOL
+
+chmod +x /container-contents
+
+%runscript
+exec  "$@"

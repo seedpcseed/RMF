@@ -1,0 +1,42 @@
+startup:
+  from: data.raw_fastq
+  in_ext: fastq.gz
+  pair_ext: _R
+  split_ext: _R
+  source: source:::R/startup.R
+  completed: no
+qc.fastp:
+  from: data.raw_fastq
+  in_ext: fastq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm:::R/fastp.R
+  completed: yes
+qc.decontaminate:
+  from: qc.fastp
+  in_ext: fastq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm:::R/decontaminate.R
+  completed: no
+qc.deduplicate:
+  from: qc.decontaminate
+  in_ext: fastq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm::R/deduplicate.R
+  completed: no
+classify.kaiju:
+  from: qc.deduplicate
+  in_ext: fastq.gz
+  out_ext: kaiju.tsv
+  pass: ~
+  source: slurm:::R/classify.R
+  completed: no
+assemble.mergepairs:
+  from: qc.deduplicate
+  in_ext: fastq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm:::R/mergepairs.R
+  completed: no

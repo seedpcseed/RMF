@@ -1,0 +1,63 @@
+startup:
+  from: data.raw_seq
+  in_ext: fq.gz
+  pair_ext: _1
+  split_ext: _L1|_L2|_L3|_L4|_L5
+  source: source:::R/startup.R
+  completed: yes
+qc.fastp:
+  from: data.raw_seq
+  in_ext: fq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm:::R/fastp.R
+  completed: yes
+qc.decontaminate:
+  from: qc.fastp
+  in_ext: fastq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm:::R/decontaminate.R
+  completed: yes
+qc.seq_file_stats-1:
+  from: qc.decontaminate
+  in.ext: fastq.gz
+  out.ext: .txt
+  pass: ~
+  source: slurm:::R/seq_file_stats.R
+  completed: yes
+qc.deduplicate:
+  from: qc.decontaminate
+  in_ext: fastq.gz
+  out_ext: fastq.gz
+  pass: ~
+  source: slurm:::R/deduplicate.R
+  completed: yes
+classify.kaiju:
+  from: qc.deduplicate
+  in_ext: fastq.gz
+  out_ext: kaiju.tsv
+  pass: ~
+  source: slurm:::R/classify.R
+  completed: yes
+classify.humann_pathways:
+  from: qc.deduplicate
+  in_ext: fastq.gz
+  out_ext: ~
+  pass: ~
+  source: slurm:::R/humann_pathways.R
+  completed: yes
+assembly.assembly-by-refseq:
+  from: qc.deduplicate
+  in_ext: fastq.gz
+  out_ext: assembly/assembly-by-refseq
+  pass: ~
+  source: slurm:::R/assembly-by-refseq.R
+  completed: no
+classify.abricate_antibiotic_resistance:
+  from: assembly.pairedsingleassembly
+  in_ext: .contigs.fa
+  out_ext: ~
+  pass: ~
+  source: slurm:::R/abricate_antibiotics.R
+  completed: yes

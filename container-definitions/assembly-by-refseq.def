@@ -1,0 +1,378 @@
+Bootstrap: docker
+From: python:3.7.11-buster
+
+%files
+signalp-5.0b.Linux.tar.gz /signalp-5.0b.Linux.tar.gz
+FragGeneScan1.31.tar.gz /FragGeneScan1.31.tar.gz
+MaxBin-2.2.7.tar.gz /MaxBin-2.2.7.tar.gz
+#GTDB_v95.tar.gz
+
+%environment
+export PATH=$PATH:/opt/kmer/meryl
+export PATH=$PATH:/opt/megahit
+export PATH=/MEGAHIT-1.2.9-Linux-x86_64-static/bin/:$PATH
+export PATH=/mash-Linux64-v2.3:/:$PATH
+export PATH=$PATH:/NGStools/aragorn:/NGStools/minced:/NGStools/prodigal:/NGStools/ncbi-blast/bin:/NGStools/diamond:/NGStools/coverm:/NGStools/bwa
+export PATH=$PATH:/NGStools/hmmer/src:/NGStools/minpath:/NGStools/metaerg/bin:/NGStools/meryl/bin:/NGStools/minimap2:/NGStools/metabat/bin
+export PATH=$PATH:/NGStools/signalp/bin:/NGStools/nthits:/NGStools/ntedit:/NGStools/megahit/bin:/NGStools/fraggenescan:/NGStools/prinseq-lite
+export PATH=$PATH:/NGStools/bbtools:/NGStools/prokka/bin:/NGStools/ncbi-genome-download:/NGStools/ncbi-blast:/NGStools/mmseqs/bin:/NGStools/mash
+export PATH=$PATH:/NGStools/Trycycler:/NGStools/Trycycler/bin:/NGStools/Flye/bin:/NGStools/OPERA-MS:/NGStools/seqtk:/NGStools/MaxBin-2.2.7
+export PATH=$PATH:/NGStools/CAT/CAT_pack:/NGStools/gtdb_to_taxdump:/NGStools/pigz:/NGStools/simka/bin:/NGStools/FLASH:/NGStools/idba-1.1.3/bin
+export PATH=$PATH:/NGStools/MetaCoAG:/NGStools/metabat/bin:/NGStools/referenceseeker/bin:/NGStools/mummer
+
+%post
+apt-get -y update && apt-get -y upgrade
+apt-get install -y build-essential libbz2-dev liblzma-dev libncurses5-dev libtbb2 ncbi-blast+ \
+    software-properties-common zlib1g-dev  wget git unzip samtools bedtools bowtie2 gcc-multilib glpk-utils \
+    autoconf cpanminus perl sqlite3 tar lftp expat graphviz libdb-dev libgdbm-dev libexpat1 \
+    libexpat-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev libjson-perl \
+    libtext-csv-perl libpath-tiny-perl liblwp-protocol-https-perl libwww-perl hmmer libboost-all-dev \
+    cmake curl libncurses5-dev zlib1g-dev bzip2 bedtools sudo-ldap r-base toilet figlet \
+    pkg-config libfreetype6-dev libpng-dev python3-matplotlib
+
+sudo -s
+
+###################################################
+### Make key directories
+###################################################
+
+mkdir -p /run/shm
+mkdir -p /dev/shm
+mkdir /NGStools
+
+####################################################
+### Install support modules
+####################################################
+
+pip install numpy
+pip install tmhmm.py
+pip install networkx
+pip install biopython
+pip install networkx
+pip install scipy
+pip install tqdm
+pip install xopen
+pip install bcbio-gff
+pip install nose
+pip install pandas
+pip install pytz
+
+cpanm Bio::Perl \
+    DBI \
+    Statistics::R \
+    Archive::Extract \
+    DBD::SQLite \
+    File::Copy::Recursive \
+    Bio::DB::EUtilities \
+    Bio::SearchIO::hmmer3 \
+    LWP::Protocol::https \
+    SWISS::Entry \
+    git clone https://git.code.sf.net/p/swissknife/git swissknife-git && \
+    cd swissknife-git && \
+    perl Makefile.PL && \
+    make install
+
+#############################################
+### Add Java
+#############################################
+
+wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
+add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+apt-get -y update && apt-get install -y adoptopenjdk-8-hotspot
+
+
+#############################################
+### Install container programs
+#############################################
+
+pip install git+https://github.com/rrwick/Badread.git && \
+cd /NGStools
+
+git clone https://github.com/ablab/quast && \
+    cd quast && \
+    ./setup.py install_full
+    cd /NGStools
+
+git clone https://github.com/dutilh/CAT && \
+    cd /NGStools
+
+git clone https://github.com/Vini2/MetaCoAG && \
+    cd /NGStools
+
+wget -c https://github.com/mummer4/mummer/releases/download/v4.0.0rc1/mummer-4.0.0rc1.tar.gz
+    tar xvfz mummer-4.0.0rc1.tar.gz
+    rm mummer-4.0.0rc1.tar.gz
+    mv /NGStools/mummer-4.0.0rc1 /NGStools/mummer
+    cd /NGStools/mummer
+    ./configure --prefix=/path/to/installation
+    make
+    make install
+    cd /NGStools
+
+pip install --user biopython xopen && \
+    git clone https://github.com/oschwengers/referenceseeker.git && \
+    cd /NGStools
+
+wget https://github.com/BinPro/CONCOCT/archive/refs/tags/1.1.0.tar.gz &&
+    tar xvfz 1.1.0.tar.gz
+    rm 1.1.0.tar.gz
+    mv CONCOCT-1.1.0 CONCOCT
+    cd CONCOCT &&
+    python setup.py install
+    cd /NGStools
+
+mv /MaxBin-2.2.7.tar.gz /NGStools &&
+    tar xvfz MaxBin-2.2.7.tar.gz &&
+    cd MaxBin-2.2.7 &&
+    cd src &&
+    make
+    rm /NGStools/MaxBin-2.2.7.tar.gz
+    cd /NGStools
+
+wget https://github.com/loneknightpy/idba/releases/download/1.1.3/idba-1.1.3.tar.gz && \
+    tar xvfz idba-1.1.3.tar.gz && \
+    cd idba-1.1.3 && \
+    ./configure && \
+    make
+    cd /NGStools
+
+mkdir FLASH && \
+    cd FLASH && \
+    wget -c http://ccb.jhu.edu/software/FLASH/FLASH-1.2.11-Linux-x86_64.tar.gz && \
+    tar xvzf FLASH-1.2.11-Linux-x86_64.tar.gz && \
+    mv FLASH-1.2.11-Linux-x86_64/flash /NGStools/FLASH
+    rm FLASH-1.2.11-Linux-x86_64.tar.gz
+    cd /NGStools
+
+git clone https://github.com/madler/pigz && \
+    cd pigz && \
+    make && \
+    cd /NGStools
+
+wget -c https://github.com/GATB/simka/releases/download/v1.5.3/simka-v1.5.3-bin-Linux.tar.gz && \
+    tar -xf simka-v1.5.3-bin-Linux.tar.gz  && \
+    mv simka-v1.5.3-bin-Linux simka
+    rm /NGStools/simka-v1.5.3-bin-Linux.tar.gz
+    cd /NGStools
+
+git clone https://github.com/lh3/seqtk.git && \
+    cd seqtk && \
+    make && \
+    cd /NGStools
+
+git clone https://github.com/nick-youngblut/gtdb_to_taxdump && \
+    cd /NGStools
+
+mv /signalp-5.0b.Linux.tar.gz /NGStools/signalp-5.0b.Linux.tar.gz && \
+    cd /NGStools && \
+    tar xvzf signalp-5.0b.Linux.tar.gz && \
+    mv signalp-5.0b signalp
+    rm signalp-5.0b.Linux.tar.gz
+    cd /NGStools
+
+wget https://github.com/bwa-mem2/bwa-mem2/releases/download/v2.2.1/bwa-mem2-2.2.1_x64-linux.tar.bz2 && \
+    bzip2 -d bwa-mem2-2.2.1_x64-linux.tar.bz2 && \
+    tar xvf bwa-mem2-2.2.1_x64-linux.tar.bz2 && \
+    mv bwa-mem2-2.2.1 bwa
+    rm /NGStools/bwa-mem2-2.2.1_x64-linux.tar
+    cd /NGStools
+
+git clone https://github.com/CSB5/OPERA-MS.git && \
+    cd OPERA-MS && \
+    make
+    cd /NGStools
+
+git clone https://github.com/fenderglass/Flye && \
+    cd Flye && \
+    make
+    cd /NGStools
+
+git clone https://github.com/rrwick/Trycycler.git /NGStools/Trycycler && \
+    pip3 install /NGStools/Trycycler
+
+wget https://github.com/wwood/CoverM/releases/download/v0.6.1/coverm-x86_64-unknown-linux-musl-0.6.1.tar.gz && \
+    tar xvfz coverm-x86_64-unknown-linux-musl-0.6.1.tar.gz && \
+    mv coverm-x86_64-unknown-linux-musl-0.6.1 coverm && \
+    rm coverm-x86_64-unknown-linux-musl-0.6.1.tar.gz
+    cd /NGStools
+
+cd /
+wget https://bitbucket.org/berkeleylab/metabat/get/master.tar.gz
+tar xzvf master.tar.gz
+rm master.tar.gz
+mv berkeleylab-metabat-8b5702be9852 MetaBat
+cd MetaBat
+mkdir build && cmake -DCMAKE_INSTALL_PREFIX='/NGStools/MetaBat' && make && make install
+cd ..
+rm -r MetaBat
+cd /NGStools
+
+wget https://sourceforge.net/projects/prinseq/files/standalone/prinseq-lite-0.20.4.tar.gz && \
+    tar xvfz prinseq-lite-0.20.4.tar.gz && \
+    mv prinseq-lite-0.20.4 prinseq-lite && \
+    rm prinseq-lite-0.20.4.tar.gz && \
+    cd /NGStools
+
+wget https://github.com/lh3/minimap2/releases/download/v2.22/minimap2-2.22_x64-linux.tar.bz2 && \
+    tar -jxvf minimap2-2.22_x64-linux.tar.bz2 && \
+    mv minimap2-2.22_x64-linux minimap2 && \
+    rm minimap2-2.22_x64-linux.tar.bz2 && \
+    cd /NGStools
+
+mv /FragGeneScan1.31.tar.gz /NGStools/FragGeneScan1.31.tar.gz && \
+    tar xvzf FragGeneScan1.31.tar.gz && \
+    mv FragGeneScan1.31 fraggenescan && \
+    rm FragGeneScan1.31.tar.gz && \
+    cd /NGStools
+
+wget https://mmseqs.com/latest/mmseqs-linux-avx2.tar.gz && \
+    tar xvfz mmseqs-linux-avx2.tar.gz && \
+    rm mmseqs-linux-avx2.tar.gz && \
+    cd /NGStools
+
+git clone https://github.com/BigDataBiology/SemiBin/ /NGStools/semibin && \
+    cd /NGStools/semibin && \
+    python setup.py install && \
+    cd /NGStools
+
+git clone https://github.com/tseemann/prokka.git /NGStools/prokka && \
+    /NGStools/prokka/bin/prokka --setupdb && \
+    cd /NGStools
+
+git clone https://github.com/TheSEED/aragorn.git /NGStools/aragorn && \
+    cd aragorn && \
+    gcc -O3 -ffast-math -finline-functions -o /NGStools/aragorn/aragorn aragorn1.2.36.c && \
+    cd /NGStools
+
+wget https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.12.0+-x64-linux.tar.gz && \
+    tar xvfz  ncbi-blast-2.12.0+-x64-linux.tar.gz && \
+    mv ncbi-blast-2.12.0+ ncbi-blast
+    rm ncbi-blast-2.12.0+-x64-linux.tar.gz && \
+    cd /NGStools
+
+git clone https://github.com/hyattpd/Prodigal.git /NGStools/prodigal && \
+    cd prodigal && \
+    make && \
+    cd /NGStools
+
+git clone https://github.com/ctSkennerton/minced.git && \
+    cd minced && \
+    make && \
+    cd /NGStools
+
+mkdir diamond && \
+   cd diamond && \
+    wget https://github.com/bbuchfink/diamond/releases/download/v2.0.11/diamond-linux64.tar.gz && \
+    tar xvfz diamond-linux64.tar.gz && \
+    rm diamond-linux64.tar.gz diamond_manual.pdf && \
+    cd /NGStools
+
+
+#git clone https://github.com/xiaoli-dong/metaerg.git /NGStools/metaerg
+git clone https://github.com/seedpcseed/metaerg.git /NGStools/metaerg && \
+    chmod 777 -R /NGStools/metaerg/bin && \
+    cd /NGStools
+
+git clone https://github.com/seedpcseed/MinPath /NGStools/minpath
+# wget https://github.com/xiaoli-dong/docker-metaerg/blob/master/minpath1.4.tar.gz && \
+#    tar xvfz minpath1.4.tar.gz \
+    cd /NGStools
+
+wget https://github.com/marbl/meryl/releases/download/v1.3/meryl-1.3.Linux-amd64.tar.xz && \
+    tar -xJf meryl-1.3.Linux-amd64.tar.xz && \
+    mv meryl-1.3 meryl && \
+    rm meryl-1.3.Linux-amd64.tar.xz &&
+    cd /NGStools
+
+wget https://github.com/marbl/Mash/releases/download/v2.3/mash-Linux64-v2.3.tar && \
+    tar xfv mash-Linux64-v2.3.tar && \
+    mv mash-Linux64-v2.3 mash && \
+    rm mash-Linux64-v2.3.tar && \
+    cd /NGStools
+
+wget https://github.com/voutcn/megahit/releases/download/v1.2.9/MEGAHIT-1.2.9-Linux-x86_64-static.tar.gz && \
+    tar xvfz MEGAHIT-1.2.9-Linux-x86_64-static.tar.gz && \
+    mv MEGAHIT-1.2.9-Linux-x86_64-static megahit && \
+    rm MEGAHIT-1.2.9-Linux-x86_64-static.tar.gz && \
+    cd /NGStools
+
+wget https://sourceforge.net/projects/bbmap/files/BBMap_38.91.tar.gz && \
+    tar zvxf BBMap_38.91.tar.gz && \
+    rm BBMap_38.91.tar.gz && \
+    cd /NGStools
+
+git clone https://github.com/kblin/ncbi-genome-download /NGStools/ncbi-genome-download && \
+    cd ncbi-genome-download && \
+    pip3 install .
+
+git clone https://github.com/bcgsc/nthits /NGStools/nthits && \
+    cd /NGStools/nthits && \
+    ./autogen.sh && \
+    ./configure --prefix=/NGStools/nthits/bin CFLAGS='-g -O3' CXXFLAGS='-g -O3' && \
+    make && \
+    make install && \
+    cd /NGStools
+
+git clone https://github.com/bcgsc/ntEdit.git /NGStools/ntedit && \
+    cd /NGStools/ntedit && \
+    make ntedit
+
+rm /NGStools/idba-1.1.3.tar.gz
+
+
+cd /
+git clone https://github.com/xero/figlet-fonts
+mv figlet-fonts/* /usr/share/figlet
+rm -r figlet-fonts
+
+apt-get remove -y autoconf \
+    cpanminus \
+    gcc-multilib \
+    git \
+    make && \
+    apt-get autoclean -y
+
+chmod 777 -R /NGStools
+chmod 777 -R /dev
+chmod 777 -R /run
+
+# make way to call the container contents
+# call is 'container-contents.sh'
+
+cat >> /container-contents <<EOL
+figlet -f big RMetaflow
+figlet -f smslant Assembly Module
+echo ""
+echo "=========================================="
+figlet -f small Contents
+echo "=========================================="
+echo ""
+ls -x /NGStools
+echo "-------------------"
+echo "-------------------"
+echo ""
+EOL
+
+chmod +x /container-contents
+
+cat >> /help <<EOL
+figlet -f big RMetaflow
+figlet -f smslant Assembly Module
+echo "=========================================="
+figlet -f small Help
+echo "=========================================="
+echo ""
+echo "To see container contents"
+echo "Enter 'container-contents'."
+echo ""
+echo "Otherwise provide the software call"
+echo "and parameters needed for a container"
+echo "program."
+echo ""
+echo ""
+EOL
+
+chmod +x /help
+
+%runscript
+exec  "$@"

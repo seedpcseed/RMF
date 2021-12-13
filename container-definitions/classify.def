@@ -1,0 +1,152 @@
+Bootstrap: docker
+From: python:3.6.14-buster
+
+%setup
+   if [ -L /dev/shm ]; then
+       if [ ! -d /run/shm ]; then exit 1; fi
+       mkdir -p /dev/manual
+       ln -s /dev/manual ${SINGULARITY_ROOTFS}/run/shm
+       touch ${SINGULARITY_ROOTFS}/rm_run_shm
+   fi
+
+%environment
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export CONDA_DIR="/opt/miniconda-4.6.14"
+PATH=/opt/miniconda-4.6.14/bin:/kaiju/bin:$PATH
+
+
+%post
+apt-get update -qq
+apt-get install -y -q --no-install-recommends \
+    apt-utils \
+    bzip2 \
+    ca-certificates \
+    curl \
+    locales \
+    gcc \
+    libomp-dev \
+    gfortran \
+    build-essential \
+    unzip \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxcomposite-dev \
+    wget \
+    gdebi-core \
+    cmake \
+    git \
+    python3-pip \
+    unzip \
+    jellyfish \
+    bioperl \
+    ncbi-blast+ \
+    gzip \
+    libjson-perl \
+    libtext-csv-perl \
+    libpath-tiny-perl \
+    liblwp-protocol-https-perl \
+    libwww-perl
+
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+
+sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+dpkg-reconfigure --frontend=noninteractive locales
+update-locale LANG= en_US.UTF-8
+chmod 777 /opt && chmod a+s /opt
+
+export PATH="/opt/miniconda-4.6.14/bin:$PATH"
+echo  "Downloading Miniconda installer ..."
+conda_installer="/tmp/miniconda.sh"
+curl -fsSL --retry 5 -o  $conda_installer  https://repo.continuum.io/miniconda/Miniconda3-4.6.14-Linux-x86_64.sh
+bash  $conda_installer -b -p /opt/miniconda-4.6.14
+rm -f  $conda_installer
+
+conda config --system --prepend channels conda-forge
+conda config --system --set auto_update_conda false
+conda config --system --set show_channel_urls true
+conda config --add channels bioconda
+conda config --add channels anaconda
+conda config --add channels biocore
+conda config --add channels agbiome
+conda config --add channels biobakery
+conda config --add channels r
+
+sync && conda update conda && conda clean -y --all && sync
+
+conda install mamba
+mamba install pigz
+mamba install humann
+mamba install metaphlan
+mamba install diamond=0.9.36
+mamba install bowtie2
+mamba install hmmer
+mamba install libcurl
+mamba install blast
+mamba install ncbi-amrfinderplus
+mamba install abricate
+
+cd /
+git clone  https://github.com/bioinformatics-centre/kaiju.git
+cd /kaiju/src
+make
+chmod 755 -R /kaiju/bin
+export PATH=/kaiju/bin:$PATH
+
+# cd /
+#
+# mkdir databases
+# cd databases
+#
+# kaiju-makedb -s progenomes
+# kaiju-makedb -s fungi
+# kaiju-makedb -s viruses
+# kaiju-makedb -s plasmids
+#
+# metaphlan --install
+#
+# mkdir -p /opt/miniconda-4.6.14/envs/biobakery/lib/python3.7/site-packages/humann/data/misc
+# humann_databases --download utility_mapping full  /opt/miniconda-4.6.14/envs/biobakery/lib/python3.7/site-packages/humann/data/misc
+
+sync && mamba clean --all && sync
+
+pip install --no-cache-dir  \
+  ete3 \
+  numpy \
+  scipy \
+  pandas==0.25.1
+
+pip3 install numpy>=1.15.4
+pip3 install networkx>=2.5
+pip3 install matplotlib>=2.2.3
+pip3 install biopython>=1.73
+
+git clone https://github.com/tseemann/any2fasta.git
+cp any2fasta/any2fasta /usr/local/bin
+export PATH=$PATH:/usr/local/bin
+
+mkdir /software
+wget https://github.com/chanzuckerberg/idseq-dedup/releases/download/v0.1.1/idseq-dedup-Linux -O /software/idseq-dedup
+git clone https://github.com/Piezoid/pugz /software/pugz
+cd /software/pugz
+make asserts=0
+
+ln -s /software/pugz/gunzip /bin/pugz
+chmod 777 -R /software
+chmod 777 -R /bin
+
+chmod 777 -R /opt/miniconda-4.6.14/bin
+
+rm -rf /var/lib/apt/lists/*
+rm -rf ~/.cache/pip/*
+sync
+
+%runscript
+# echo "Kaiju databases in the container: /databases"
+# echo "humann databases installed in container"
+# echo "metphlan databases installed in container"
+# echo "abricate databases installed in container"
+
+exec  "$@"
