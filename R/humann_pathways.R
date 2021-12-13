@@ -121,7 +121,7 @@ if ( !commands[STEP][[1]]$completed ){
   lapply(ls, function(x) system(str_glue("mv {x} {out.dir}/single_sample_files")))
 
   ls = list.files(file.path(out.dir, "single_sample_files"), full.names = TRUE)
-  calls = str_glue("{pigz} pigz {ls}")
+  calls = str_glue("{classify} pigz {ls}")
 
   if( slurm ){
     printGlue("#-------- you should send Slurm a thank you card \n
