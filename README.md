@@ -1,6 +1,3 @@
-# programming.RMetaflow.Instructions.2021-12-11
-
-
 # RMetaflow (RMF) - An R-Based Pipeline for Metagenomic Processing 
 
 ## Introduction 
