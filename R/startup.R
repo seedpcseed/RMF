@@ -6,7 +6,7 @@
 #' Ann and Robert H. Lurie Children's Hospital
 #' Northwestern University
 #' MIT license
-#' 
+#'
 
 # Check and install needed libraries --------------------------------------
 pkgs.to.install <- attachment::att_from_rscripts("R")
@@ -30,7 +30,7 @@ getCommandSteps()
 # make directory structure ------------------------------------------------
 
 if( !commands$startup$completed ){
-  directories = c("data", "qc", "classify", "assembly", "metadata", "log", "assembly")
+  directories = c("data", "qc", "classify", "assembly", "metadata", "log")
   sapply(directories, dir.create)
 
   commands$startup$completed = TRUE; updateYaml()
@@ -67,8 +67,8 @@ while(STEP <= length(commands)){
 }
 
 printGlue("All steps of RMetaflow were completed.
-  
-          If you think there are more steps to be finished, 
-          please review your metaflow-steps.yml file in the 
+
+          If you think there are more steps to be finished,
+          please review your metaflow-steps.yml file in the
           folder 'yaml'", log = TRUE)
 q('no')
