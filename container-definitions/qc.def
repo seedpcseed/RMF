@@ -72,8 +72,6 @@ sync && conda update conda && conda clean -y --all && sync
 
 conda install mamba
 mamba install fastp
-mamba install cython
-mamba install humann -c biobakery
 mamba install samtools
 mamba install bbtools
 mamba install bedtools

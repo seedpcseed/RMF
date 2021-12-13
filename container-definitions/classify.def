@@ -78,7 +78,8 @@ sync && conda update conda && conda clean -y --all && sync
 
 conda install mamba
 mamba install pigz
-mamba install humann
+mamba install cython
+mamba install humann -c biobakery
 mamba install metaphlan
 mamba install diamond=0.9.36
 mamba install bowtie2
