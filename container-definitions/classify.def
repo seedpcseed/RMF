@@ -85,7 +85,6 @@ mamba install diamond=0.9.36
 mamba install bowtie2
 mamba install hmmer
 mamba install libcurl
-mamba install blast
 mamba install ncbi-amrfinderplus
 mamba install abricate
 
@@ -95,21 +94,6 @@ cd /kaiju/src
 make
 chmod 755 -R /kaiju/bin
 export PATH=/kaiju/bin:$PATH
-
-# cd /
-#
-# mkdir databases
-# cd databases
-#
-# kaiju-makedb -s progenomes
-# kaiju-makedb -s fungi
-# kaiju-makedb -s viruses
-# kaiju-makedb -s plasmids
-#
-# metaphlan --install
-#
-# mkdir -p /opt/miniconda-4.6.14/envs/biobakery/lib/python3.7/site-packages/humann/data/misc
-# humann_databases --download utility_mapping full  /opt/miniconda-4.6.14/envs/biobakery/lib/python3.7/site-packages/humann/data/misc
 
 sync && mamba clean --all && sync
 
@@ -128,26 +112,29 @@ git clone https://github.com/tseemann/any2fasta.git
 cp any2fasta/any2fasta /usr/local/bin
 export PATH=$PATH:/usr/local/bin
 
-mkdir /software
-wget https://github.com/chanzuckerberg/idseq-dedup/releases/download/v0.1.1/idseq-dedup-Linux -O /software/idseq-dedup
-git clone https://github.com/Piezoid/pugz /software/pugz
-cd /software/pugz
-make asserts=0
-
-ln -s /software/pugz/gunzip /bin/pugz
-chmod 777 -R /software
-chmod 777 -R /bin
-
 chmod 777 -R /opt/miniconda-4.6.14/bin
 
 rm -rf /var/lib/apt/lists/*
 rm -rf ~/.cache/pip/*
 sync
 
+cat >> /container-contents <<EOL
+figlet -f big RMetaflow
+figlet -f smslant Classify Module
+echo ""
+echo "-------------------"
+echo "CONTAINER CONTENTS:"
+echo "-------------------"
+conda info
+conda list
+ls /software
+echo "-------------------"
+echo "-------------------"
+echo ""
+EOL
+
+chmod +x /container-contents
+
 %runscript
-# echo "Kaiju databases in the container: /databases"
-# echo "humann databases installed in container"
-# echo "metphlan databases installed in container"
-# echo "abricate databases installed in container"
 
 exec  "$@"
