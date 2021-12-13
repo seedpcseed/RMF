@@ -8,7 +8,8 @@ RMetaflow uses R scripts to guide sequence processing and analysis coordinated w
 *Why R?* R efficiently oversees the pipeline, is easy to code, is readable, and has many tools for downstream data analysis, alleviating some need to jump back and forth between programming languages.  Since the heavy computational steps are run in singularity containers, R is not itself using major resources. 
 
 The major steps for RMetaflow include:
-1. QC: sequence filtering, trimming, decontamination, and deduplication. 
+1. QC: sequence filtering, trimming, decontamination, and deduplication.
+
    PROGRAMS: 
    1. fastp
    2. CONCOCT cut_up_fasta.py 
@@ -17,12 +18,16 @@ The major steps for RMetaflow include:
    5. bbtools 
    6. pigz
    7. idseq-dedup 
+   
 2. Classification of paired reads. 
+
    PROGRAMS: 
    1. kaiju
    2. humann (if you like)
+   
 3. De novo assembly of the reads, classification, and functional analysis.
-    PROGRAMS: 
+
+   PROGRAMS: 
     1. megahit  
     2. prinseq-lite 
     3. metaerg 
