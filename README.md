@@ -8,8 +8,8 @@ RMetaflow uses R scripts to guide sequence processing and analysis coordinated w
 *Why R?* R efficiently oversees the pipeline, is easy to code, is readable, and has many tools for downstream data analysis, alleviating some need to jump back and forth between programming languages.  Since the heavy computational steps are run in singularity containers, R is not itself using major resources. 
 
 The major steps for RMetaflow include:
-1. QC: sequence filtering, trimming, decontamination, and deduplication.
-
+1. QC: sequence filtering, trimming, decontamination, and deduplication. 
+   
    PROGRAMS: 
    1. fastp
    2. CONCOCT cut_up_fasta.py 
@@ -20,14 +20,14 @@ The major steps for RMetaflow include:
    7. idseq-dedup 
    
 2. Classification of paired reads. 
-
+   
    PROGRAMS: 
    1. kaiju
    2. humann (if you like)
    
 3. De novo assembly of the reads, classification, and functional analysis.
-
-   PROGRAMS: 
+   
+    PROGRAMS: 
     1. megahit  
     2. prinseq-lite 
     3. metaerg 
@@ -83,3 +83,19 @@ https://kaiju.binf.ku.dk/database/kaiju_db_progenomes_2020-05-25.tgz
 ## Run conditions
 1. I routinely run the pipeline and containers on a Slurm-based management system where R and singularity are loaded as modules. The use of slurm can be controlled. 
 2. I routinely will run with arrays of 100 nodes and up to 52 threads per node. Ideally you have at least 64 Gb per node available but 128 Gb per node is better. The number of nodes and threads can be modified.
+
+## Citations
+* Chen S, Zhou Y, Chen Y, Gu J. fastp: an ultra-fast all-in-one FASTQ preprocessor. Bioinformatics. 2018 Sep 1;34(17):i884–i890. PMCID: PMC6129281
+* Li H. Minimap2: pairwise alignment for nucleotide sequences. Bioinformatics. 2018 Sep 15;34(18):3094–3100. PMCID: PMC6137996
+* idseq-dedup: https://github.com/chanzuckerberg/idseq-dedup
+* Alneberg J, Bjarnason BS, de Bruijn I, Schirmer M, Quick J, Ijaz UZ, Lahti L, Loman NJ, Andersson AF, Quince C. Binning metagenomic contigs by coverage and composition. Nat Methods. 2014 Nov;11(11):1144–1146. PMID: 25218180
+* Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R. The Sequence Alignment/Map format and SAMtools. Bioinformatics. 2009 Aug 15;25(16):2078–2079. PMID: 19505943
+* BBtools: BBMap – Bushnell B. – sourceforge.net/projects/bbmap/
+* pigz:  https://zlib.net/pigz/
+* Menzel P, Ng KL, Krogh A. Fast and sensitive taxonomic classification for metagenomics with Kaiju. Nat Commun. 2016 Apr 13;7:11257. PMCID: PMC4833860
+* Beghini F, McIver LJ, Blanco-Míguez A, Dubois L, Asnicar F, Maharjan S, Mailyan A, Manghi P, Scholz M, Thomas AM, Valles-Colomer M, Weingart G, Zhang Y, Zolfo M, Huttenhower C, Franzosa EA, Segata N. Integrating taxonomic, functional, and strain-level profiling of diverse microbial communities with bioBakery 3. Elife [Internet]. 2021 May 4;10. Available from: http://dx.doi.org/10.7554/eLife.65088 PMCID: PMC8096432
+* Li D, Liu C-M, Luo R, Sadakane K, Lam T-W. MEGAHIT: an ultra-fast single-node solution for large and complex metagenomics assembly via succinct de Bruijn graph. Bioinformatics. 2015 May 15;31(10):1674–1676. PMID: 25609793
+* Schmieder R, Edwards R. Quality control and preprocessing of metagenomic datasets. Bioinformatics. 2011 Mar 15;27(6):863–864. PMCID: PMC3051327
+* Dong X, Strous M. An Integrated Pipeline for Annotation and Visualization of Metagenomic Contigs. Front Genet. 2019 Oct 15;10:999. PMCID: PMC6803454
+* Woodcroft BJ. CoverM: Read coverage calculator for metagenomics [Internet]. Github; [cited 2021 Dec 13]. Available from: https://github.com/wwood/CoverM
+* Wu Y-W, Simmons BA, Singer SW. MaxBin 2.0: an automated binning algorithm to recover genomes from multiple metagenomic datasets. Bioinformatics. 2016 Feb 15;32(4):605–607. PMID: 26515820
