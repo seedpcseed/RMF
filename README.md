@@ -58,7 +58,6 @@ https://kaiju.binf.ku.dk/database/kaiju_db_progenomes_2020-05-25.tgz
 * humann_databases --download chocophlan full databases/humann --update-config yes
 * humann_databases --download uniref uniref90_diamond /databases/humann --update-config yes
 * humann_databases --download utility_mapping full /databases/humann --update-config yes
-4. 
 
 ## The Yaml File 
 1. You will need a folder "yaml" containing the file "metaflow-steps.yml" that will guide each of the processing steps.
