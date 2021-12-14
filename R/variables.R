@@ -85,7 +85,7 @@ variables.flye = stringr::str_glue("--threads {threads} --iterations 0 --meta --
 variables.abricate = stringr::str_glue("--threads {threads} --db ncbi --nopath ")
 
 methods = list(
-  fastp =  "Sequences were quality controled and preprocessed using the software fastp with the default settigs {references$fastp}.",
+  fastp =  "Sequences were quality controlled and preprocessed using the software fastp with the default settigs {references$fastp}.",
   bbduk = "Human and mouse sequences were filtered out using the tool bbduk using the references GRCh38.p13 and GRCm39, respectively {references$bbduk}.",
   bowtie = "Human, mouse, and phiX174 sequences were filtered out using bowtie2 and the sequence references GRCh38.p13, GRCm39, and GCF_000819615.1, respectively {references$bowtie}.",
   flash = "Pre-processed paired end reads were merged by overlap using the tool FLASH {references$flash}.",
